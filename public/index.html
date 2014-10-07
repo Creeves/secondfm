@@ -1,0 +1,100 @@
+<html>
+	<head></head>
+	<body>
+		<input id="user" type="text" placeholder="Current User">
+		<button id="recommendBtn">Make Recommendation</button><br>
+		<input id="search" type="text">
+		<button id="searchBtn">Search Artists</button>
+		<br>
+		Results:
+		<br>
+		<span id="results"></span>
+		<br>
+		<br>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+		<script>
+		$('#recommendBtn').click(function() {
+
+			$('#results').empty()
+			var user_id = $('#user').val();
+			$.ajax({
+	            type: 'POST',
+	            url: 'http://localhost/recommend/',
+	            contentType: 'application/json',
+	            data: JSON.stringify({user_id: user_id}),
+	            success: function(data) {
+	            	data = JSON.parse(data);
+	                console.log(data);
+	                $('#results').append('Artists friends listen most to<br><br>');
+	                $.each(data.friends_most_listens, function(i,e) {
+	                	displayArtist(e);
+	                });
+	                $('#results').append('Artists most friends listen to<br><br>');
+	                $.each(data.friends_most_listeners, function(i,e) {
+	                	displayArtist(e);
+	                });
+	                $('#results').append('Most popular artists containing a related tag<br><br>');
+	                $.each(data.tags, function(i,e) {
+	                	displayArtist(e);
+	                });
+	            },
+	            error: function(error) {
+	                console.log(error);
+	            }
+	        });	
+		});
+		$('#searchBtn').click(function() {
+			$('#results').empty()
+			$.ajax({
+	            type: 'POST',
+	            url: 'http://localhost/search/',
+	            contentType: 'application/json',
+	            data: JSON.stringify({query: $('#search').val()}),
+	            success: function(data) {
+	            	data = JSON.parse(data);
+	                console.log(data);
+	                $.each(data, function(i,e) {
+	                	displayArtist(e);
+	                })
+	            },
+	            error: function(error) {
+	                console.log(error);
+	            }
+	        });			
+		});
+		function displayArtist(artist) {			
+        	$('#results').append(artist.name);
+        	$('#results').append('<br>');
+        	$('#results').append('<img src="' + artist.pictureURL + '">');
+        	$('#results').append('<br>');
+        	$('#results').append('Listeners: <span id="listen' + artist._id + '">' + artist.listeners + '</span>');
+        	$('#results').append('<br>');
+        	$('#results').append('<a href="#" class="listen" id="' + artist._id + '">Listen</a>');
+        	$('#results').append('<br>');
+        	$('#results').append('<a href="' + artist.url + '">More Info...</a>');
+        	$('#results').append('<br>');
+        	$('#results').append('<br>');
+        	$('#results').append('<br>');
+		}
+		$('#results').on('click', '.listen', function(e) {
+			var artist_id = e.target.id;
+			$.ajax({
+	            type: 'POST',
+	            url: 'http://localhost/listen/',
+	            contentType: 'application/json',
+	            data: JSON.stringify({
+	            	artist_id: artist_id,
+	            	user_id: $('#user').val()
+	            }),
+	            success: function(data) {
+	            	alert('Recorded play successfully.');
+	            	$('#listen' + artist_id).text(parseInt($('#listen' + artist_id).text()) + 1);
+	            },
+	            error: function(error) {
+	                console.log(error);
+	            }
+	        });	
+		})
+		</script>
+	</body>
+</html>
